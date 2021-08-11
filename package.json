@@ -1,0 +1,13 @@
+{
+  "name": "ianog",
+  "version": "1.0.0",
+  "description": "I am over-engineering this because node-canvas didn't work out sadface emoji",
+  "engines": {
+    "node": "14.x"
+  },
+  "dependencies": {
+    "chrome-aws-lambda": "^10.1.0",
+    "puppeteer": "^10.2.0",
+    "puppeteer-core": "^10.2.0"
+  }
+}
