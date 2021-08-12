@@ -8,7 +8,9 @@ const exePath =
     ? '/usr/bin/google-chrome'
     : '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 
-async function getOptions(isDev = false) {
+let PAGE;
+
+async function getOptions(isDev) {
   if (isDev) {
     return {
       args: [],
@@ -24,14 +26,30 @@ async function getOptions(isDev = false) {
   };
 }
 
+async function getPage(isDev = false) {
+  if (PAGE) {
+    return PAGE;
+  }
+
+  const options = await getOptions(isDev);
+  const browser = await puppeteer.launch(options);
+  PAGE = await browser.newPage();
+  return PAGE;
+}
+
 module.exports = async (request, response) => {
   const isDev = request.query.isDev === 'true';
   const pageToScreenshot = request.query.page;
 
+  if (!isDev && !pageToScreenshot.startsWith('https://ianmitchell.dev')) {
+    response.statusCode = 400;
+    response.json({
+      error: 'Please use your own service',
+    });
+  }
+
   try {
-    const options = await getOptions(isDev);
-    const browser = await puppeteer.launch(options);
-    const page = await browser.newPage();
+    const page = await getPage(isDev);
 
     await page.setViewport({
       width: 1200,
@@ -45,10 +63,12 @@ module.exports = async (request, response) => {
       type: 'png',
     });
 
-    await browser.close();
-
     response.statusCode = 200;
     response.setHeader('Content-Type', `image/png`);
+    response.setHeader(
+      'Cache-Control',
+      `public, immutable, no-transform, s-maxage=31536000, max-age=31536000`
+    );
     response.end(file);
   } catch (error) {
     response.statusCode = 500;
